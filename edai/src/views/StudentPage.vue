@@ -1,13 +1,29 @@
 <template>
     <div class="student">
-        <h1>Student Page</h1>
-        <router-link to="/">Home</router-link>
-        <router-link to="/teacher">Teacher</router-link>
+        <img alt="Vue logo" src="../assets/edai-logo.png" />
+        <div v-if="currentPage === 'form'">
+            <StudentForm @FormSubmit="displayApplication"/>
+        </div>
+        <div v-else>
+            <StudentApplication :roomID="currentRoomID" :userName="currentUserName"/>
+        </div>
     </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import StudentForm  from '../components/StudentForm.vue'
+import StudentApplication from '../components/StudentApplication.vue'
 
+const currentPage = ref('form')
+const currentRoomID = ref('')
+const currentUserName = ref('')
+
+function displayApplication(userNameResponse, roomIDResponse) {
+    currentUserName.value = userNameResponse
+    currentRoomID.value = roomIDResponse
+    currentPage.value = 'application'
+}
 </script>
 
 <style>
