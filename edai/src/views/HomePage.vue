@@ -1,6 +1,5 @@
 <template>
     <div class="home">
-        <img alt="Vue logo" src="../assets/edai-logo.png" />
         <v-item-group selected-class="bg-primary">
             <v-container>
                 <v-row>

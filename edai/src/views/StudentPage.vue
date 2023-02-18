@@ -1,6 +1,5 @@
 <template>
     <div class="student">
-        <img alt="Vue logo" src="../assets/edai-logo.png" />
         <div v-if="currentPage === 'form'">
             <StudentForm @FormSubmit="displayApplication"/>
         </div>
