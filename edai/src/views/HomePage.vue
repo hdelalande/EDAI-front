@@ -1,9 +1,45 @@
 <template>
     <div class="home">
-        <img alt="Vue logo" src="../assets/logo.png" />
-        <h1>Home Page</h1>
-        <v-btn><router-link to="/teacher">Teacher</router-link></v-btn>
-        <v-btn><router-link to="/student">Student</router-link></v-btn>
+        <img alt="Vue logo" src="../assets/edai-logo.png" />
+        <v-item-group selected-class="bg-primary">
+            <v-container>
+                <v-row>
+                    <v-col
+                    >
+                        <v-item v-slot="{selectedClass, toggle }">
+                            <router-link style="text-decoration:none" to="/teacher">
+                                <v-card
+                                    :class="['d-flex align-center', selectedClass]"
+                                    dark
+                                    height="200"
+                                    @click="toggle"
+                                    >            
+                                        <div class="text-h3 flex-grow-1 text-center">
+                                            Create a room !
+                                        </div>
+                                </v-card>
+                            </router-link>
+                        </v-item>
+                    </v-col>
+                    <v-col
+                    >
+                    <router-link style="text-decoration:none" to="/student">
+                        <v-item v-slot="{selectedClass, toggle}">
+                            <v-card
+                            :class="['d-flex align-center', selectedClass]"
+                            dark
+                            height="200"
+                            @click="toggle" 
+                            >
+                            <div class="text-h3 flex-grow-1 text-center">Join a room :)</div>
+                            </v-card>
+                        </v-item>
+                    </router-link>
+                    </v-col>
+                </v-row>
+            </v-container>
+
+        </v-item-group>
     </div>
 </template>
 
@@ -11,10 +47,13 @@
 
 </script>
 
-<style>
+<style scoped>
     .home {
         text-align: center;
         color: #2c3e50;
         margin-top: 60px;
     }
+router-link{
+    text-decoration: none;
+}
 </style>
