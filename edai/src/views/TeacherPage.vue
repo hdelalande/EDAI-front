@@ -1,30 +1,54 @@
 <template>
     <div class="teacher">
-        <h1>Your Room ID is :{{ RoomID }} <br> Share it to your students </h1>
-        <div v-if="currentState === 'waiting'">
-            <v-btn @click="startRecording">Start Recording</v-btn>
+        <div v-if="currentState === 'finished'">
+            <h1>The presentation is finished, you can back home</h1>
+            <router-link to="/">
+                <v-btn>Back Home</v-btn>
+            </router-link>
         </div>
         <div v-else>
-            <v-btn @click="stopRecording">Stop Recording</v-btn>
+            <h1>Your Room ID is :{{ RoomID }} <br> Share it to your students </h1>
+            <div v-if="currentState === 'waiting' || currentState === 'stopped'">
+                <v-btn @click="startRecording">Start Recording</v-btn>
+            </div>
+            <div v-if="currentState === 'recording'">
+                <v-btn @click="stopRecording">Stop Recording</v-btn>
+            </div>
+            <v-btn @click="FinishPresentation">Presentation finished</v-btn>
         </div>
+
     </div>
 
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useWebSocket } from '@vueuse/core'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 
 const currentState = ref('waiting')
-const RoomID = ref(Math.random().toString(36).substring(2, 15)); 
+const RoomID = ref(Math.random().toString(36).substring(2, 15));
+const ws = new WebSocket('ws://127.0.0.1:8000/ws/lecture/speaker/room/'+ RoomID.value +'/')
+// const { statusListener, dataListener, sendListener, openListener, closeListener } = useWebSocket('ws://127.0.0.1:8000/ws/lecture/listener/room/'+ RoomID.value +'/')
 
-const { status, data, send, open, close } = useWebSocket('ws://127.0.0.1:8000/ws/lecture/speaker/room/100/')
-open()
-console.log(status)
-console.log(data)
-send('Hello World')
-close()
+
+onMounted(() => {
+    ws.addEventListener('open', () => {
+        const buffer = new ArrayBuffer(4);
+        const view = new DataView(buffer);
+        view.setUint32(0, RoomID.value, true);
+
+        ws.send(buffer);
+    })
+
+    ws.addEventListener('message', (event) => {
+        console.log(event.data)
+    })
+})
+
+onUnmounted(() => {
+    ws.close()
+})
+
 
 var context;
 var recorder;
@@ -39,18 +63,18 @@ function startRecording(){
     navigator.msGetUserMedia;    
 
     // lecture of the audio stream
-    navigator.getUserMedia({ audio: true },     
+    navigator.getUserMedia({ audio: { sampleRate: 44100 } },     
     function (e) {     
         // creates the audio context  
         window.AudioContext = window.AudioContext || window.webkitAudioContext;     
         context = new AudioContext();     
 
         // creates an audio node from the microphone incoming stream     
-        mediaStream = context.createMediaStreamSource(e);    
+        mediaStream = context.createMediaStreamSource(e);
         // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createScriptProcessor     
         var bufferSize = 2048;     
-        var numberOfInputChannels = 2;     
-        var numberOfOutputChannels = 2;
+        var numberOfInputChannels = 1;     
+        var numberOfOutputChannels = 1;
         if (context.createScriptProcessor) {     
             recorder = context.createScriptProcessor(bufferSize, numberOfInputChannels, numberOfOutputChannels);     
         } else {     
@@ -60,7 +84,14 @@ function startRecording(){
 
         recorder.onaudioprocess = function (e) {     
             // console.log('recording');
-            console.log(e.inputBuffer);
+            var inputData = e.inputBuffer.getChannelData(0);
+            var outputData = new Int16Array(inputData.length);
+            for (var i = 0; i < inputData.length; i++) {
+                var sample = inputData[i];
+
+                outputData[i] = Math.max(-1, Math.min(1, sample)) * 0x7FFF;
+            }
+            ws.send(outputData);
         }
         // we connect the recorder with the input stream     
         mediaStream.connect(recorder);     
@@ -73,13 +104,16 @@ function startRecording(){
 }
 
 function stopRecording(){
-    currentState.value = 'waiting'
+    currentState.value = 'stopped'
     // stop recording 
     recorder.disconnect(context.destination);
     mediaStream.disconnect(recorder);
 }
 
-
+function FinishPresentation(){
+    currentState.value = 'finished'
+    ws.close()
+}
 
 </script>
 
