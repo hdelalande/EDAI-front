@@ -20,7 +20,7 @@ const { connected, loading } = storeToRefs(store)
     <!-- ---------------------------------------------- -->
     <div class="pa-4 d-none d-md-block">
       <router-link to="/">
-        <v-img id="linkToHome" :src="require('@/assets/edai-logo.png')" :width="200"></v-img>
+        <v-img id="linkToHome" :src="require('@/assets/lectury_logo.png')" :width="200"></v-img>
       </router-link>
     </div>
 
