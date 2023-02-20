@@ -19,7 +19,9 @@ const { connected, loading } = storeToRefs(store)
     <!---Logo part -->
     <!-- ---------------------------------------------- -->
     <div class="pa-4 d-none d-md-block">
-      <v-img id="linkToHome" :src="require('@/assets/edai-logo.png')" :width="200"></v-img>
+      <router-link to="/">
+        <v-img id="linkToHome" :src="require('@/assets/edai-logo.png')" :width="200"></v-img>
+      </router-link>
     </div>
 
     <v-app-bar-nav-icon
