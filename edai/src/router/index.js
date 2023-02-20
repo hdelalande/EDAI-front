@@ -4,14 +4,14 @@ const router = createRouter({
     history: createWebHistory("/"),
     routes: [
       {
+        path: '',
+        name: 'Home',
+        component: () => import("../views/HomePagev2.vue"),
+      },
+      {
         path: "/",
         component: () => import("@/layouts/FullLayout.vue"),
         children: [
-          {
-            path: '/home',
-            name: 'Home',
-            component: () => import("../views/HomePage.vue"),
-            },
           {
               path: "/teacher",
               name: "Teacher",
@@ -28,8 +28,9 @@ const router = createRouter({
               component: () => import("../views/StudentPagev2.vue"),
           },
           {
-              path: "/teacherv2",
+              path: "/teacher/room/:roomID",
               name: "Teacher",
+              props: true,
               component: () => import("../views/TeacherPagev2.vue"),
           }
         ],
