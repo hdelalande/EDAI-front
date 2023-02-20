@@ -22,7 +22,7 @@
                     </v-col>
                     <v-col
                     >
-                    <router-link style="text-decoration:none" to="/student">
+                    <router-link style="text-decoration:none" to="/studentForm">
                         <v-item v-slot="{selectedClass, toggle}">
                             <v-card
                             :class="['d-flex align-center', selectedClass]"
