@@ -2,15 +2,18 @@
 import { ref } from 'vue'
 import { onMounted, onBeforeUnmount } from 'vue'
 import { useConnectionStateStore } from '@/stores/connection'
+import { useTranscriptionStore } from '@/stores/transcription'
 import { storeToRefs } from 'pinia'
-
+import router from '@/router'
 import startRecording from '@/services/recorder.js'
+import TranscriptionDisplayTest from '@/components/TranscriptionDisplayTest.vue'
 
-const store = useConnectionStateStore()
-const { connected, loading } = storeToRefs(store)
+const connectionStore = useConnectionStateStore()
+const transcriptionStore = useTranscriptionStore()
+const { connected, loading } = storeToRefs(connectionStore)
+const { transcription } = storeToRefs(transcriptionStore)
 
-// Get roomID from URL
-const roomID = ref('200')
+const roomID = ref('')
 
 const ws = ref()
 
@@ -35,7 +38,18 @@ const openConnection = () => {
         }))
     })
   ws.value.addEventListener('message', (event) => {
-      console.log(event.data)
+    let data = JSON.parse(event.data)
+    if (data.type == 'transcription.message') {
+      console.log('transcription.message', data)
+      if (data.completed == true) {
+        transcriptionStore.speechSegmentsArray.push(data.text_segment)
+      } else {
+        transcriptionStore.lastSpeechSegment = data.text_segment
+      }
+      console.log('transcription', transcription)
+    } else if (data.type == 'healthcheck.message') {
+      console.log('healthcheck.message', data)
+    }
   })
   ws.value.addEventListener('close', () => {
     console.log('Disconnected from WebSocket server')
@@ -67,6 +81,7 @@ const microphoneSwitch = () => {
 }
 
 onMounted(() => {
+  roomID.value = router.currentRoute.value.params.roomID
   openConnection()
 })
 
@@ -120,15 +135,13 @@ onBeforeUnmount(() => {
         </v-card-subtitle>
         <v-card-text>
 
-          <div :style=" { 'width': '100%', 'height': '700px', 'background': 'grey' }">
-
-          </div>
+          <TranscriptionDisplayTest> hey</TranscriptionDisplayTest>
 
         </v-card-text>
         
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="info"> Exit </v-btn>
+          <v-btn color="info" to="/"> Exit </v-btn>
         </v-card-actions>
 
       </v-card>
