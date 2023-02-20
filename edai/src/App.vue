@@ -1,5 +1,5 @@
 <template>
-  <router-link to="/"><img id="linkToHome" alt="Vue logo" src="./assets/edai-logo.png" /></router-link>
+  <router-link to="/"></router-link>
   <router-view/>
 </template>
 
