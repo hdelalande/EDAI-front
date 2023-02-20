@@ -1,9 +1,11 @@
 <template>
     <v-card title="Flashnotes" height="600">
         <v-list>
-                <v-card 
+            <v-list-item
                 v-for="item in flashnotes"
                 :key="item.id"
+            >
+                <v-card 
                 :title="item.title" 
                 color="grey" 
                 height="200">
@@ -20,6 +22,7 @@
                         {{ item.body }}
                     </v-card-item>
                 </v-card>
+            </v-list-item>
         </v-list>
     
     </v-card>
