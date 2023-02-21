@@ -6,59 +6,20 @@
                 <h2> Room: {{ roomID }}</h2>
             </v-col>
             <v-col md="8" sm="12">
-                    <DisplayTranscription :height="600">  </DisplayTranscription>
+                <DisplayTranscription :height="600" @textSelected="updateText">  </DisplayTranscription>
                 <br>
-                <v-btn 
-                    class="mr-1"
-                    id="summary-btn"
-                    > 
-                    Summarize last minutes
-                    <v-menu activator="parent">
-                        <v-list>
-                            <v-list-item
-                                v-for="(item,index) in timeRange"    
-                                :key="index"
-                                :value="index"
-                                @click="summarizeLastMinutes(item.value)"
-                                >
-                                <v-list-item-title>
-                                    {{ item.title }}
-                                </v-list-item-title>
-                            </v-list-item>
-                        </v-list>
-                    </v-menu>
-                </v-btn>
-                
-
-                <v-btn class="ml-1"> 
-                Extract Keypoints on the last minutes
-                    <v-menu activator="parent">
-                        <v-list>
-                            <v-list-item
-                                v-for="(item,index) in timeRange"    
-                                :key="index"
-                                :value="index"
-                                @click= "generateKeyPointsLastMinutes(item.value)"
-                                >
-                                <v-list-item-title>
-                                    {{ item.title }}
-                                </v-list-item-title>
-                            </v-list-item>
-                        </v-list>
-                    </v-menu>
-                </v-btn>
-
             </v-col>
             <v-col md="4" sm="12">
                 <FlashNotes :flashnotes=flashnotes></FlashNotes>
             </v-col>
         </v-row>
+        <SelectFlashnoteType @createFlasnote="createFlasnote"></SelectFlashnoteType>
     </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import api from '@/services/axios'
 import { useConnectionStateStore } from '@/stores/connection'
 import { useTranscriptionStore } from '@/stores/transcription'
@@ -66,6 +27,7 @@ import router from '@/router'
 import { storeToRefs } from 'pinia'
 import DisplayTranscription from '@/components/DisplayTranscription.vue'
 import FlashNotes from '@/components/FlashNotes.vue'
+import SelectFlashnoteType from '@/components/SelectFlashnoteType.vue'
 
 
 const connectionStore = useConnectionStateStore()
@@ -73,21 +35,72 @@ const transcriptionStore = useTranscriptionStore()
 const { connected, loading } = storeToRefs(connectionStore)
 const { transcription } = storeToRefs(transcriptionStore)
 
-const timeRange = ref([
-    {title: "2 minutes", value: '120'},
-    {title: "5 minutes", value: '300'},
-    {title: "10 minutes", value: '600'},
-    {title: "15 minutes", value: '900'},
-    {title: "30 minutes", value: '1800'},
-    {title: "45 minutes", value: '2700'},
-    ]
-)
-
 const flashnotes = ref([])
-
 const roomID = ref('')
-
 const ws = ref()
+const text = ref('')
+
+const createFlasnote = (type, input, seconds) => {
+  if (type === 'summary' && input === 'last_minutes') {
+    summarizeLastMinutes(seconds)
+  }
+  if (type === 'key_points' && input === 'last_minutes') {
+    generateKeyPointsLastMinutes(seconds)
+  }
+  if (type === 'summary' && input === 'text') {
+    summarizeFromText(text.value)
+  }
+  if (type === 'key_points' && input === 'text') {
+    generateKeyPointsFromText(text.value)
+  }
+}
+
+const updateText = () => {
+    text.value = text.value + "\n" + document.getSelection().toString()
+    console.log(text.value)
+}
+
+const summarizeFromText = (text) => {
+    var lenght_flashnotes = flashnotes.value.length
+    flashnotes.value.push({
+        title: 'Summary',
+        body: 'Loading...',
+        status: 'loading'
+    })
+    api.get('/text/summarize/?text=' + text)
+    .then((response) => {
+        flashnotes.value[lenght_flashnotes] = {
+            title: 'Summary',
+            body: response.data.summary,
+            status: 'loaded'
+        }
+    })
+    .catch((error) => {
+      console.log(error)
+      flashnotes.value.pop()
+    })
+}
+
+const generateKeyPointsFromText = (text) => {
+    var lenght_flashnotes = flashnotes.value.length
+    flashnotes.value.push({
+        title: 'Key Points',
+        body: 'Loading...',
+        status: 'loading'
+    })
+    api.get('/text/extract-keypoints/?text=' + text)
+    .then((response) => {
+        flashnotes.value[lenght_flashnotes] = {
+            title: 'Key Points',
+            body: response.data.keypoints,
+            status: 'loaded'
+        }
+    })
+    .catch((error) => {
+      console.log(error)
+      flashnotes.value.pop()
+    })
+}
 
 const summarizeLastMinutes = (seconds) => {
     var lenght_flashnotes = flashnotes.value.length
@@ -140,6 +153,10 @@ const generateKeyPointsLastMinutes = (seconds) => {
 onMounted(() => {
   roomID.value = router.currentRoute.value.params.roomID
   openConnection()
+})
+
+onUnmounted(() => {
+  ws.value.close()
 })
 
 const openConnection = () => {

@@ -1,5 +1,5 @@
 <template>
-    <v-card title="Flashnotes" height="600">
+    <v-card class="overflow-y-auto" title="Flashnotes" height="600">
         <v-list>
             <v-list-item
                 v-for="item in flashnotes"
@@ -8,7 +8,7 @@
                 <v-card 
                 :title="item.title" 
                 color="grey" 
-                height="200">
+                >
                     <v-card-item v-if="item.status === 'loading'"
                     class="center-content"
                     >

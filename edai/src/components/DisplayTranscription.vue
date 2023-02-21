@@ -10,16 +10,10 @@ const { transcription } = storeToRefs(transcriptionStore)
 
 
 <template>
-    <v-card title="Transcription">
-        <v-textarea
-            v-model="transcription"
-            label="Transcription"
-            outlined
-            :rows="10"
-            :auto-grow="true"
-            :counter="100"
-            :disabled="true">
-        </v-textarea>     
+    <v-card id="cardTranscription" title="Transcription" :text=transcription v-on:click="$emit('textSelected')" :ripple="false" v-enter>
     </v-card>
 
 </template>
+
+<style>
+</style>
