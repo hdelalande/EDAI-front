@@ -1,18 +1,23 @@
 <template>
     <div class="student">
         <v-row>
-
             <v-col cols="12">
-                <h2> Room: {{ roomID }}</h2>
+              <v-alert variant="tonal" color="info" icon="mdi-human-male-board">
+                <h3> Room {{ roomID }} </h3>
+              </v-alert>
             </v-col>
             <v-col md="8" sm="12">
-                    <TranscriptionDisplay :height="600">  </TranscriptionDisplay>
-                <br>
+            <v-card max-height="600" class="overflow-auto">
+              <v-card-text>
+                <TranscriptionDisplay @updateTextSelected="updateText" :height="600">  </TranscriptionDisplay>
+              </v-card-text>
+            </v-card>
             </v-col>
             <v-col md="4" sm="12">
-                <FlashNotes :flashnotes=flashnotes></FlashNotes>
+                <FlashNotes :flashnotes=flashnotes @student-modify-title="updateStudentTitle"></FlashNotes>
             </v-col>
         </v-row>
+        <br>
         <SelectFlashnoteType @createFlasnote="createFlasnote"></SelectFlashnoteType>
     </div>
 </template>
@@ -38,7 +43,7 @@ const { transcription } = storeToRefs(transcriptionStore)
 const flashnotes = ref([])
 const roomID = ref('')
 const ws = ref()
-const text = ref('')
+const text = ref([])
 
 const createFlasnote = (type, input, seconds) => {
   if (type === 'summary' && input === 'last_minutes') {
@@ -55,8 +60,12 @@ const createFlasnote = (type, input, seconds) => {
   }
 }
 
-const updateText = () => {
-    text.value = text.value + "\n" + document.getSelection().toString()
+const updateStudentTitle = (index, title) => {
+  flashnotes.value[index].studentTilte = title
+}
+
+const updateText = (newTextSelected) => {
+    text.value = newTextSelected
     console.log(text.value)
 }
 
@@ -64,6 +73,7 @@ const summarizeFromText = (text) => {
     var lenght_flashnotes = flashnotes.value.length
     flashnotes.value.push({
         title: 'Summary',
+        studentTilte: '',
         body: 'Loading...',
         status: 'loading'
     })
@@ -71,6 +81,7 @@ const summarizeFromText = (text) => {
     .then((response) => {
         flashnotes.value[lenght_flashnotes] = {
             title: 'Summary',
+            studentTilte: '',
             body: response.data.summary,
             status: 'loaded'
         }
@@ -85,6 +96,7 @@ const generateKeyPointsFromText = (text) => {
     var lenght_flashnotes = flashnotes.value.length
     flashnotes.value.push({
         title: 'Key Points',
+        studentTilte: '',
         body: 'Loading...',
         status: 'loading'
     })
@@ -92,6 +104,7 @@ const generateKeyPointsFromText = (text) => {
     .then((response) => {
         flashnotes.value[lenght_flashnotes] = {
             title: 'Key Points',
+            studentTilte: '',
             body: response.data.keypoints,
             status: 'loaded'
         }
@@ -106,6 +119,7 @@ const summarizeLastMinutes = (seconds) => {
     var lenght_flashnotes = flashnotes.value.length
     flashnotes.value.push({
         title: 'Summary',
+        studentTilte: '',
         last_duration: seconds,
         body: 'Loading...',
         transcript: 'Loading...',
@@ -115,6 +129,7 @@ const summarizeLastMinutes = (seconds) => {
     .then((response) => {
         flashnotes.value[lenght_flashnotes] = {
             title: 'Summary',
+            studentTilte: '',
             last_duration: response.data.last_duration,
             body: response.data.summary,
             transcript: response.data.transcript,
@@ -131,6 +146,7 @@ const generateKeyPointsLastMinutes = (seconds) => {
     var lenght_flashnotes = flashnotes.value.length
     flashnotes.value.push({
         title: 'Key Points',
+        studentTilte: '',
         last_duration: seconds,
         body: 'Loading...',
         transcript: 'Loading...',
@@ -140,9 +156,10 @@ const generateKeyPointsLastMinutes = (seconds) => {
     .then((response) => {
         flashnotes.value[lenght_flashnotes] = {
             title: 'Key Points',
-            last_duration: response.data.last_duration,
+            studentTilte: '',
             body: response.data.keypoints,
-            transcript: response.data.transcript
+            last_duration: response.data.last_duration,
+            status: 'loaded'
         }
     })
     .catch((error) => {
