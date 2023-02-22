@@ -33,25 +33,19 @@
 
       <v-main style="min-height: 850px;">
       
-
-        <v-card min-height="850">
-          
-        <v-card-title>Room {{ roomID }}</v-card-title>
-        <v-card-subtitle>    
-
-        </v-card-subtitle>
-        <v-card-text>
-
-          <TranscriptionDisplayTest> hey</TranscriptionDisplayTest>
-
-        </v-card-text>
         
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="info" to="/"> Exit </v-btn>
-        </v-card-actions>
+        
+        <v-alert variant="tonal" color="info" icon="mdi-human-male-board">
+          <h3> Room {{ roomID }} </h3>
+        </v-alert>
 
-      </v-card>
+        <v-card max-height="650" class="overflow-auto">
+          <v-card-text>
+              <TranscriptionDisplay> hey </TranscriptionDisplay>
+          </v-card-text>
+        </v-card>
+      <br>
+      <v-btn color="info" to="/" variant="text"> Exit </v-btn>
       
       </v-main>
       
@@ -70,6 +64,7 @@ import { storeToRefs } from 'pinia'
 import router from '@/router'
 import startRecording from '@/services/recorder.js'
 import TranscriptionDisplayTest from '@/components/TranscriptionDisplayTest.vue'
+import TranscriptionDisplay from '@/components/TranscriptionDisplay.vue'
 
 const connectionStore = useConnectionStateStore()
 const transcriptionStore = useTranscriptionStore()
@@ -104,14 +99,14 @@ const openConnection = () => {
     let data = JSON.parse(event.data)
     if (data.type == 'transcription.message') {
       console.log('transcription.message', data)
-      if (data.completed == true) {
+      if (data.completed) {
         transcriptionStore.speechSegmentsArray.push(data.text_segment)
       } else {
         transcriptionStore.lastSpeechSegment = data.text_segment
       }
       console.log('transcription', transcription)
     } else if (data.type == 'healthcheck.message') {
-      console.log('healthcheck.message', data)
+    //   console.log('healthcheck.message', data)
     }
   })
   ws.value.addEventListener('close', () => {

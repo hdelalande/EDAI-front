@@ -6,7 +6,7 @@
                 <h2> Room: {{ roomID }}</h2>
             </v-col>
             <v-col md="8" sm="12">
-                <DisplayTranscription :height="600" @textSelected="updateText">  </DisplayTranscription>
+                    <TranscriptionDisplay :height="600">  </TranscriptionDisplay>
                 <br>
             </v-col>
             <v-col md="4" sm="12">
@@ -25,7 +25,7 @@ import { useConnectionStateStore } from '@/stores/connection'
 import { useTranscriptionStore } from '@/stores/transcription'
 import router from '@/router'
 import { storeToRefs } from 'pinia'
-import DisplayTranscription from '@/components/DisplayTranscription.vue'
+import TranscriptionDisplay from '@/components/TranscriptionDisplay.vue'
 import FlashNotes from '@/components/FlashNotes.vue'
 import SelectFlashnoteType from '@/components/SelectFlashnoteType.vue'
 
@@ -167,7 +167,7 @@ const openConnection = () => {
     console.log('roomID is empty')
     return
   }
-  ws.value = new WebSocket('ws://127.0.0.1:8000/ws/lecture/speaker/room/' + roomID.value + '/')
+  ws.value = new WebSocket('ws://127.0.0.1:8000/ws/lecture/listener/room/' + roomID.value + '/')
   ws.value.addEventListener('open', () => {
         console.log('connected')
         loading.value = false
