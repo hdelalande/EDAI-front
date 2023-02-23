@@ -76,7 +76,10 @@ const summarizeFromText = (text) => {
         body: 'Loading...',
         status: 'loading'
     })
-    api.get('/text/summarize/?text=' + text)
+    let body ={
+        text: text
+    }
+    api.post('/text/summarize/', body)
     .then((response) => {
         flashnotes.value[lenght_flashnotes] = {
             title: 'Summary',
@@ -99,7 +102,10 @@ const generateKeyPointsFromText = (text) => {
         body: 'Loading...',
         status: 'loading'
     })
-    api.get('/text/extract-keypoints/?text=' + text)
+    let body = {
+        text: text
+    }
+    api.post('/text/extract-keypoints/', body)
     .then((response) => {
         flashnotes.value[lenght_flashnotes] = {
             title: 'Key Points',
