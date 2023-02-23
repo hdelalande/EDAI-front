@@ -25,6 +25,62 @@
 
         <v-divider></v-divider>
 
+        <v-row class="mt-1 ml-2" align="center">
+            <v-col cols="6" class="">
+              <v-chip color="primary" label size="small"> Sleep time (ms) </v-chip>
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model.number="sleepTime"
+                variant="outlined"
+                type="number"
+                min="0"
+                density="compact"
+                hide-details="true"
+              ></v-text-field>
+            </v-col>
+        </v-row>
+
+        <v-row class="my-0 ml-2" align="center">
+            <v-col cols="6" class="">
+              <v-chip color="primary" label size="small"> Timeout (ms) </v-chip>
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model.number="segmentTimeout"
+                variant="outlined"
+                type="number"
+                min="0"
+                density="compact"
+                hide-details="true"
+              ></v-text-field>
+            </v-col>
+        </v-row>
+
+        <v-row class="my-0 ml-2" align="center">
+            <v-col cols="6" class="">
+              <v-chip color="primary" label size="small"> Language </v-chip>
+            </v-col>
+            <v-col cols="6">
+              <v-select
+                :items="languageOptions"
+                v-model="language"
+                density="compact"
+                variant="underlined"
+                hide-details="true"
+              >
+
+              </v-select>
+            </v-col>
+        </v-row>
+
+        <v-row class="my-0 ml-2" align="center">
+            <v-col cols="6" class="">
+              <v-btn variant="text" color="primary" size="small" @click="updateParameters"> Save </v-btn>
+            </v-col>
+        </v-row>
+
+        <v-divider></v-divider>
         <v-list density="compact">
           <v-list-item prepend-icon="mdi-account-school" title="Student 1" value="home" :link="false"></v-list-item>
           <v-list-item prepend-icon="mdi-account-school" title="Student 2" value="account" :link="false"></v-list-item>
@@ -45,6 +101,7 @@
           </v-card-text>
         </v-card>
       <br>
+      <v-btn @click="clearSelection" :variant="selectedItems.length > 0 ? 'tonal': 'plain'" color="primary"> Clear selection </v-btn>
       <v-btn color="info" to="/" variant="text"> Exit </v-btn>
       
       </v-main>
@@ -54,22 +111,20 @@
 </template>
 
 
-
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onMounted, onBeforeUnmount } from 'vue'
 import { useConnectionStateStore } from '@/stores/connection'
 import { useTranscriptionStore } from '@/stores/transcription'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
 import startRecording from '@/services/recorder.js'
-import TranscriptionDisplayTest from '@/components/TranscriptionDisplayTest.vue'
 import TranscriptionDisplay from '@/components/TranscriptionDisplay.vue'
 
 const connectionStore = useConnectionStateStore()
 const transcriptionStore = useTranscriptionStore()
 const { connected, loading } = storeToRefs(connectionStore)
-const { transcription } = storeToRefs(transcriptionStore)
+const { transcription, selectedItems } = storeToRefs(transcriptionStore)
 
 const roomID = ref('')
 
@@ -77,6 +132,27 @@ const ws = ref()
 
 const microphoneMuted = ref(true)
 const contextRecord = ref()
+
+const sleepTime = ref(1000)
+const segmentTimeout = ref(1000)
+const languageOptions = ref(['en', 'fr'])
+const language = ref('en')
+
+
+function updateParameters() {
+  console.log('update parameters', sleepTime.value, segmentTimeout.value, language.value)
+  ws.value.send(JSON.stringify({
+    "event": "update_parameters",
+    "sleep_time": sleepTime.value,
+    "segment_timeout": segmentTimeout.value,
+    "language": language.value
+  }))
+}
+
+function clearSelection() {
+  selectedItems.value = []
+  console.log('clear selection', selectedItems.value)
+}
 
 const openConnection = () => {
   loading.value = true
