@@ -38,12 +38,11 @@ import SelectFlashnoteType from '@/components/SelectFlashnoteType.vue'
 const connectionStore = useConnectionStateStore()
 const transcriptionStore = useTranscriptionStore()
 const { connected, loading } = storeToRefs(connectionStore)
-const { transcription } = storeToRefs(transcriptionStore)
+const { transcription, selectedText } = storeToRefs(transcriptionStore)
 
 const flashnotes = ref([])
 const roomID = ref('')
 const ws = ref()
-const text = ref([])
 
 const createFlasnote = (type, input, seconds) => {
   if (type === 'summary' && input === 'last_minutes') {
@@ -53,10 +52,10 @@ const createFlasnote = (type, input, seconds) => {
     generateKeyPointsLastMinutes(seconds)
   }
   if (type === 'summary' && input === 'text') {
-    summarizeFromText(text.value)
+    summarizeFromText(selectedText.value)
   }
   if (type === 'key_points' && input === 'text') {
-    generateKeyPointsFromText(text.value)
+    generateKeyPointsFromText(selectedText.value)
   }
 }
 
@@ -65,8 +64,8 @@ const updateStudentTitle = (index, title) => {
 }
 
 const updateText = (newTextSelected) => {
-    text.value = newTextSelected
-    console.log(text.value)
+    selectedText.value = newTextSelected
+    console.log(selectedText.value)
 }
 
 const summarizeFromText = (text) => {
