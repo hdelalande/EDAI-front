@@ -18,7 +18,7 @@
                   color="primary"	
                 ></v-text-field>
                 <v-btn class="my-2" prepend-icon="mdi-location-enter" block variant="outlined" height="50" color="primary" @click="joinRoom"> Join room (student)</v-btn>
-                <v-btn class="my-2" block color="primary" @click="createRoom"> Create room (Teacher)</v-btn>
+                <v-btn class="my-2" block color="primary" @click="createRoom" :loading="loading"> Create room (Teacher)</v-btn>
               </v-container>
             </v-col>
             <v-col cols="4"></v-col>
@@ -32,14 +32,18 @@ import api from '@/services/axios'
 import router from '@/router'
 
 const roomIDofStudent = ref('')
+const loading = ref(false)
 
 function joinRoom() {
     router.push({ path: "/student/room/"+roomIDofStudent.value})
 }
 
 function createRoom() {
+  loading.value = true
+
   api.get('/generate/room_id/')
     .then((response) => {
+      loading.value = false
       const roomID = response.data.room_id
       router.push({ path: `/teacher/room/${roomID}` })
     })
