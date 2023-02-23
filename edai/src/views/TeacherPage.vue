@@ -1,127 +1,227 @@
 <template>
-    <div class="teacher">
-        <div v-if="currentState === 'finished'">
-            <h1>The presentation is finished, you can back home</h1>
-            <router-link to="/">
-                <v-btn>Back Home</v-btn>
-            </router-link>
-        </div>
-        <div v-else>
-            <h1>Your Room ID is :{{ RoomID }} <br> Share it to your students </h1>
-            <div v-if="currentState === 'waiting' || currentState === 'stopped'">
-                <v-btn @click="startRecording">Start Recording</v-btn>
-            </div>
-            <div v-if="currentState === 'recording'">
-                <v-btn @click="stopRecording">Stop Recording</v-btn>
-            </div>
-            <v-btn @click="FinishPresentation">Presentation finished</v-btn>
-        </div>
+  <div>
+    <v-layout>
 
-    </div>
+      <v-navigation-drawer
+        permanent
+        location="right"
+      >
+        <template v-slot:prepend>
+          <v-list-item
+            lines="two"
+            title="Speaker"
+          >
+          <template v-slot:prepend>
+            <v-btn icon size="large" variant="outlined" class="mr-3" :color="microphoneMuted ? 'error' : 'success'" @click="microphoneSwitch()">
+              <v-icon :icon="microphoneMuted ? 'mdi-microphone-off': 'mdi-microphone'"></v-icon>
+            </v-btn>
+          </template>
+          <template v-slot:subtitle="{  }">
+            <v-chip :color="connected ? 'success' : 'error'"> {{ connected ? '1': '0' }} person in the room</v-chip>
+          </template>
+        
+        </v-list-item>
+        </template>
 
+        <v-divider></v-divider>
+
+        <v-row class="mt-1 ml-2" align="center">
+            <v-col cols="6" class="">
+              <v-chip color="primary" label size="small"> Sleep time (ms) </v-chip>
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model.number="sleepTime"
+                variant="outlined"
+                type="number"
+                min="0"
+                density="compact"
+                hide-details="true"
+              ></v-text-field>
+            </v-col>
+        </v-row>
+
+        <v-row class="my-0 ml-2" align="center">
+            <v-col cols="6" class="">
+              <v-chip color="primary" label size="small"> Timeout (ms) </v-chip>
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model.number="segmentTimeout"
+                variant="outlined"
+                type="number"
+                min="0"
+                density="compact"
+                hide-details="true"
+              ></v-text-field>
+            </v-col>
+        </v-row>
+
+        <v-row class="my-0 ml-2" align="center">
+            <v-col cols="6" class="">
+              <v-chip color="primary" label size="small"> Language </v-chip>
+            </v-col>
+            <v-col cols="6">
+              <v-select
+                :items="languageOptions"
+                v-model="language"
+                density="compact"
+                variant="underlined"
+                hide-details="true"
+              >
+
+              </v-select>
+            </v-col>
+        </v-row>
+
+        <v-row class="my-0 ml-2" align="center">
+            <v-col cols="6" class="">
+              <v-btn variant="text" color="primary" size="small" @click="updateParameters"> Save </v-btn>
+            </v-col>
+        </v-row>
+
+        <v-divider></v-divider>
+        <v-list density="compact">
+          <v-list-item prepend-icon="mdi-account-school" title="Student 1" value="home" :link="false"></v-list-item>
+          <v-list-item prepend-icon="mdi-account-school" title="Student 2" value="account" :link="false"></v-list-item>
+        </v-list>
+      </v-navigation-drawer>
+
+      <v-main style="min-height: 850px;">
+      
+        
+        
+        <v-alert variant="tonal" color="info" icon="mdi-human-male-board">
+          <h3> Room {{ roomID }} </h3>
+        </v-alert>
+
+        <v-card max-height="650" class="overflow-auto">
+          <v-card-text>
+              <TranscriptionDisplay> hey </TranscriptionDisplay>
+          </v-card-text>
+        </v-card>
+      <br>
+      <v-btn @click="clearSelection" :variant="selectedItems.length > 0 ? 'tonal': 'plain'" color="primary"> Clear selection </v-btn>
+      <v-btn color="info" to="/" variant="text"> Exit </v-btn>
+      
+      </v-main>
+      
+    </v-layout>
+  </div>
 </template>
 
+
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
+import { onMounted, onBeforeUnmount } from 'vue'
+import { useConnectionStateStore } from '@/stores/connection'
+import { useTranscriptionStore } from '@/stores/transcription'
+import { storeToRefs } from 'pinia'
+import router from '@/router'
+import startRecording from '@/services/recorder.js'
+import TranscriptionDisplay from '@/components/TranscriptionDisplay.vue'
+
+const connectionStore = useConnectionStateStore()
+const transcriptionStore = useTranscriptionStore()
+const { connected, loading } = storeToRefs(connectionStore)
+const { transcription, selectedItems } = storeToRefs(transcriptionStore)
+
+const roomID = ref('')
+
+const ws = ref()
+
+const microphoneMuted = ref(true)
+const contextRecord = ref()
+
+const sleepTime = ref(1000)
+const segmentTimeout = ref(1000)
+const languageOptions = ref(['en', 'fr'])
+const language = ref('en')
 
 
-const currentState = ref('waiting')
-const RoomID = ref(Math.random().toString(36).substring(2, 15));
-const ws = new WebSocket('ws://127.0.0.1:8000/ws/lecture/speaker/room/'+ RoomID.value +'/')
-// const { statusListener, dataListener, sendListener, openListener, closeListener } = useWebSocket('ws://127.0.0.1:8000/ws/lecture/listener/room/'+ RoomID.value +'/')
+function updateParameters() {
+  console.log('update parameters', sleepTime.value, segmentTimeout.value, language.value)
+  ws.value.send(JSON.stringify({
+    "event": "update_parameters",
+    "sleep_time": sleepTime.value,
+    "segment_timeout": segmentTimeout.value,
+    "language": language.value
+  }))
+}
 
+function clearSelection() {
+  selectedItems.value = []
+  console.log('clear selection', selectedItems.value)
+}
+
+const openConnection = () => {
+  loading.value = true
+  console.log('roomID: ', roomID.value)
+
+  if (roomID.value === '') {
+    console.log('roomID is empty')
+    return
+  }
+  ws.value = new WebSocket('ws://127.0.0.1:8000/ws/lecture/speaker/room/' + roomID.value + '/')
+  ws.value.addEventListener('open', () => {
+        console.log('connected')
+        loading.value = false
+        connected.value = true
+        ws.value.send(JSON.stringify({
+          "event": "start_health_check"
+        }))
+    })
+  ws.value.addEventListener('message', (event) => {
+    let data = JSON.parse(event.data)
+    if (data.type == 'transcription.message') {
+      console.log('transcription.message', data)
+      if (data.completed) {
+        transcriptionStore.speechSegmentsArray.push(data.text_segment)
+      } else {
+        transcriptionStore.lastSpeechSegment = data.text_segment
+      }
+      console.log('transcription', transcription)
+    } else if (data.type == 'healthcheck.message') {
+    //   console.log('healthcheck.message', data)
+    }
+  })
+  ws.value.addEventListener('close', () => {
+    console.log('Disconnected from WebSocket server')
+    connected.value = false
+    ws.value.close()
+  })
+  ws.value.addEventListener('error', (event) => {
+    console.error('WebSocket error', event)
+    loading.value = false
+    connected.value = false
+  })
+}
+
+const microphoneSwitch = () => {
+  if (microphoneMuted.value == true) {
+    startRecording(ws.value).then((context) => {
+      contextRecord.value = context
+      console.log('start recording', contextRecord)
+    })
+    microphoneMuted.value = false
+  } else {
+    if (contextRecord.value) {
+      contextRecord.value.mediaStream.disconnect()
+      contextRecord.value.recorder.disconnect()
+      console.log('disconnected')
+    }
+    microphoneMuted.value = true
+  }
+}
 
 onMounted(() => {
-    ws.addEventListener('open', () => {
-        const buffer = new ArrayBuffer(4);
-        const view = new DataView(buffer);
-        view.setUint32(0, RoomID.value, true);
-
-        ws.send(buffer);
-    })
-
-    ws.addEventListener('message', (event) => {
-        console.log(event.data)
-    })
+  roomID.value = router.currentRoute.value.params.roomID
+  openConnection()
 })
 
-onUnmounted(() => {
-    ws.close()
+onBeforeUnmount(() => {
+  ws.value.close()
 })
-
-
-var context;
-var recorder;
-var mediaStream;
-
-function startRecording(){
-    currentState.value = 'recording'
-    // Ask for access to the microphone
-    navigator.getUserMedia = navigator.getUserMedia ||     
-    navigator.webkitGetUserMedia ||     
-    navigator.mozGetUserMedia ||     
-    navigator.msGetUserMedia;    
-
-    // lecture of the audio stream
-    navigator.getUserMedia({ audio: { sampleRate: 44100 } },     
-    function (e) {     
-        // creates the audio context  
-        window.AudioContext = window.AudioContext || window.webkitAudioContext;     
-        context = new AudioContext();     
-
-        // creates an audio node from the microphone incoming stream     
-        mediaStream = context.createMediaStreamSource(e);
-        // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createScriptProcessor     
-        var bufferSize = 2048;     
-        var numberOfInputChannels = 1;     
-        var numberOfOutputChannels = 1;
-        if (context.createScriptProcessor) {     
-            recorder = context.createScriptProcessor(bufferSize, numberOfInputChannels, numberOfOutputChannels);     
-        } else {     
-            recorder = context.createJavaScriptNode(bufferSize, numberOfInputChannels, numberOfOutputChannels);     
-        }      
-        console.log("on audio progress");     
-
-        recorder.onaudioprocess = function (e) {     
-            // console.log('recording');
-            var inputData = e.inputBuffer.getChannelData(0);
-            var outputData = new Int16Array(inputData.length);
-            for (var i = 0; i < inputData.length; i++) {
-                var sample = inputData[i];
-
-                outputData[i] = Math.max(-1, Math.min(1, sample)) * 0x7FFF;
-            }
-            ws.send(outputData);
-        }
-        // we connect the recorder with the input stream     
-        mediaStream.connect(recorder);     
-        recorder.connect(context.destination);     
-    },
-    function (e) {     
-    // error     
-    console.error(e);     
-    });
-}
-
-function stopRecording(){
-    currentState.value = 'stopped'
-    // stop recording 
-    recorder.disconnect(context.destination);
-    mediaStream.disconnect(recorder);
-}
-
-function FinishPresentation(){
-    currentState.value = 'finished'
-    ws.close()
-}
 
 </script>
 
-<style>
-    .teacher {
-        text-align: center;
-        color: #2c3e50;
-        margin-top: 60px;
-    }
-    
-</style>

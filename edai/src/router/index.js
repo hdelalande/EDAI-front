@@ -4,37 +4,34 @@ const router = createRouter({
     history: createWebHistory("/"),
     routes: [
       {
+        path: '',
+        name: 'Home',
+        component: () => import("../views/HomePage.vue"),
+      },
+      {
         path: "/",
         component: () => import("@/layouts/FullLayout.vue"),
         children: [
-          {
-            path: '/home',
-            name: 'Home',
-            component: () => import("../views/HomePage.vue"),
+            {
+                path: "/student/room/:roomID",
+                name: "Student",
+                component: () => import("../views/StudentPage.vue"),
             },
-          {
+            {
               path: "/teacher",
               name: "Teacher",
               component: () => import("../views/TeacherPage.vue"),
-          },
-          {
-              path: "/student",
-              name: "Student",
-              component: () => import("../views/StudentPage.vue"),
-          },
-          {
-              path: "/studentv2",
-              name: "Student",
-              component: () => import("../views/StudentPagev2.vue"),
-          },
-          {
-              path: "/teacherv2",
+            },
+            {
+              path: "/teacher/room/:roomID",
               name: "Teacher",
-              component: () => import("../views/TeacherPagev2.vue"),
-          }
+              props: true,
+              component: () => import("../views/TeacherPage.vue"),
+            }
         ],
       }
     ]
 });
 
 export default router
+

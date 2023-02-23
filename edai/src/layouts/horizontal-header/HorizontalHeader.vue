@@ -1,4 +1,9 @@
 <script setup>
+import { useConnectionStateStore } from '@/stores/connection'
+import { storeToRefs } from 'pinia'
+
+const store = useConnectionStateStore()
+const { connected, loading } = storeToRefs(store)
 
 </script>
 
@@ -14,7 +19,9 @@
     <!---Logo part -->
     <!-- ---------------------------------------------- -->
     <div class="pa-4 d-none d-md-block">
-      <v-img id="linkToHome" :src="require('@/assets/edai-logo.png')" :width="200"></v-img>
+      <router-link to="/">
+        <v-img id="linkToHome" :src="require('@/assets/lectury_logo.png')" :width="200"></v-img>
+      </router-link>
     </div>
 
     <v-app-bar-nav-icon
@@ -23,10 +30,19 @@
 
     <v-spacer />
 
-    <v-chip class="mx-2">
-      <v-badge color="error" dot inline>
-        <span class="mr-2"> not connected </span>
-      </v-badge>
+    <v-chip :color="connected ? 'success' : 'error'" class="mr-2"> 
+
+      {{ connected ?  'connected': 'not connected' }} 
+      <v-progress-circular
+        v-if="loading"
+        indeterminate
+        :size="10"
+        :width="2"
+        color="primary"
+        class="ml-2"
+      ></v-progress-circular>
+      <v-badge v-if="!loading" dot inline :color=" connected ? 'success': 'error'"></v-badge>
+      
     </v-chip>
 
   </v-app-bar>

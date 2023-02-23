@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from "./router"
 import App from './App.vue'
+import '@mdi/font/css/materialdesignicons.css'
+import VueVirtualScroller from 'vue-virtual-scroller'
 
 const pinia = createPinia()
 
@@ -24,4 +26,4 @@ const vuetify = createVuetify({
     },
   })
 
-createApp(App).use(pinia).use(vuetify).use(router).mount('#app')
+createApp(App).use(pinia).use(vuetify).use(router).use(VueVirtualScroller).mount('#app')
