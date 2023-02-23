@@ -5,13 +5,12 @@ import { storeToRefs } from 'pinia'
 import { onMounted, computed } from 'vue'
 
 const transcriptionStore = useTranscriptionStore()
-const { speechSegmentsArray, lastSpeechSegment, transcription } = storeToRefs(transcriptionStore)
+const { speechSegmentsArray, lastSpeechSegment, transcription, selectedItems } = storeToRefs(transcriptionStore)
 
 const segmentsArray = computed(() => {
   return speechSegmentsArray.value.concat(lastSpeechSegment)
 })
 
-const selectedItems = ref([])
 const hoveredItem = ref(null)
 
 let isSelecting = false
@@ -45,6 +44,7 @@ function toggleSelection(index) {
     selectedItems.value.splice(selectedItems.value.indexOf(index), 1)
   } else {
     selectedItems.value.push(index)
+    console.log('selected items', selectedItems.value)
   }
 }
 
@@ -80,7 +80,7 @@ onMounted(() => {
       >
           <div class="d-flex">
             <v-chip 
-              class="mr-4" 
+              class="mr-4 no-select" 
               color="info"
               size="small"
               label
@@ -93,8 +93,8 @@ onMounted(() => {
                   v-bind="props" 
                   :variant="isHovering ? 'tonal': 'tonal'" 
                   density="compact" 
-                  :color="isHovering || isSelected(index) ? 'deep-purple-accent-4': 'blue'"
-                  :class="{ 'hovered': isHovering }"
+                  :color="isSelected(index) ? 'deep-purple-accent-4': 'blue'"
+                  :class="{ 'hovered': isHovering, 'selected': isSelected(index), 'no-select': true }"
                   border="start"
                   v-ripple             
                   >
@@ -122,11 +122,16 @@ onMounted(() => {
     height: 100%;
 }
 .selected {
-    background-color: 'deep-purple-accent-4';
+    color: #6200EA !important;
   }
 
 .hovered {
   cursor: pointer;
+  color: #2979FF ;
+}
+
+.no-select {
+  user-select: none;
 }
 
 </style>
